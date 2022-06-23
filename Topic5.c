@@ -1,96 +1,109 @@
-/*menu options
-create new student record
-display all student records
-exit
-
-create record
-Name of student
-Student ID
-Current average grade (A, B, C,...)
-A pointer to a structure instance of the next student
-
-needs to check if the ID already exists in the batabase before going forward.
-	if it does, display a message to the user and return to the menu options.
-	if it doesnt, add new record to database
-
-avoid memory leaks, use free() when memory no longer needed.
-
-display one line per record, Name, ID, Avg Grade, Year. then back to menu
-
-Exit - exits DB
-*/
-
-//records MUST be as structs
-	//data structure to save records is linked list
-	//single .c file
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
-struct Student{
+struct Student {
+	char name[100];
 	int student_ID;
+	char avg;
+	int year;
 	struct Student *next;
 };
-
 typedef struct Student Student;
 
-bool check_ID_Exist(){
-	bool exist = false;
-	return exist;
+void freeList(Student *head){
+	Student *temp;
+	while (head != NULL){
+		temp = head;
+		head = head->next;
+		free(temp);
+	}
 }
 
-void display_Records(){
-	printf("Displaying records\n");
-	/*while (current != NULL){
-		printf("student record data");
-		current = current->next;
-	}*/
+void displayrecords(Student *head){
+	Student *temp = head;
+	while (temp != NULL){
+		printf("Name: %s ; Id: %d ; Year: %d ; Average Grade: %c \n", temp->name, temp->student_ID, temp->year, temp->avg);
+		temp = temp->next;
+	}
+	freeList(temp);
+	printf("\n");
 }
 
-Student *create_Record(int id_num){
-	Student *record = malloc(sizeof(Student));
-	record->student_ID = id_num;
-	record->next = NULL;
-	return record;
+bool checkrecord(Student *head, int id){
+	Student *temp = head;
+	while (temp != NULL){
+		if(temp->student_ID == id){
+			freeList(temp);
+			return true;
+		}
+		temp = temp->next;
+	}
+	freeList(temp);
+	return false;
 }
 
-void create(){
-	int id_num;
-	printf("\nEnter ID number: ");
-	scanf("%d", &id_num);
-	create_Record(id_num);
+Student *create_Record(char *name, int id, char avg, int year){
+	Student *newRecord = malloc(sizeof(Student));
+	strcpy(newRecord->name, name);
+	newRecord->student_ID = id;
+	newRecord->avg = avg;
+	newRecord->year = year;
+	newRecord->next = NULL;
+	return newRecord;
 }
 
 void menu(){
-
+	Student *head = NULL;
+	Student *record;
 	bool loop = true;
+	bool recchk = true;
+	char name[100];
+	char temp;
+	int id;
+	char avg;
+	int year;
 	int choice;
 	while (loop){
 		printf("\t\tWelcome to RU Record Management System\n");
 		printf("\tPress\n");
 		printf("\t1 to create a new Student Record\n");
 		printf("\t2 to view all records\n");
-		printf("\t3 to Exit\n");
-		printf("\n");
+		printf("\t3 to Exit\n\n");
 		printf("Enter  your Choice\n");
 		scanf("%d", &choice);
 		if(choice == 1){
-			create();
+			printf("Enter student name: ");
+			scanf("%c", &temp); //clear buffer
+			scanf("%[^\n]", name);
+			printf("Enter student ID: ");
+			scanf("%d", &id);
+			recchk = checkrecord(head, id);
+			if(recchk){
+				while(recchk){
+					recchk = checkrecord(head, id);
+					if (recchk){
+						printf("ID is already in system. Please enter new ID: ");
+						scanf("%d", &id);
+					}
+				}
+			}
+			printf("Enter student's average grade: ");
+			scanf(" %c", &avg);
+			printf("Enter student's current year: ");
+			scanf("%d", &year);
+			record = create_Record(name, id, avg, year);
+			record->next = head;
+			head = record;
 		} else if (choice == 2){
-			display_Records();
+			displayrecords(head);
 		} else if (choice == 3){
 			loop = false;
 		} 
-	}	
+	}
 }
-//https://www.learn-c.org/en/Linked_lists
+
 int main(){
-	Student *head = NULL;
-	head = (struct Student*)malloc(sizeof(struct Student));
-	Student *current;
-	current = (struct Student*)malloc(sizeof(struct Student));
-	current->next = head;
 	menu();
 	return 0;
 }
